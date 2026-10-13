@@ -1153,6 +1153,37 @@ class TestExtraToolsStatuses:
         assert result["registrar"] == "Example Registrar"
         assert result["whois_status"] == ["active"]
 
+    def test_whois_name_servers_strip_glue_and_deduplicate(self, monkeypatch):
+        from types import SimpleNamespace
+        from modules import extra_tools
+
+        monkeypatch.setattr(extra_tools, "WHOIS_AVAILABLE", True)
+        monkeypatch.setattr(
+            extra_tools,
+            "whois",
+            SimpleNamespace(whois=lambda domain: SimpleNamespace(
+                registrar=None,
+                org=None,
+                country=None,
+                creation_date=None,
+                expiration_date=None,
+                updated_date=None,
+                name_servers=[
+                    "ns.heise.de 193.99.145.37 2a00:e68:14:800:0:0:0:d1ce",
+                    "NS.HEISE.DE.",
+                    "ns2.example.com.",
+                    "ns2.example.com.",
+                ],
+                status=None,
+                emails=None,
+            )),
+            raising=False,
+        )
+
+        result = extra_tools.WhoisLookup().lookup("heise.de")
+
+        assert result["name_servers"] == ["ns.heise.de", "ns2.example.com"]
+
     def test_whois_exception_is_error(self, monkeypatch):
         from types import SimpleNamespace
         from modules import extra_tools
