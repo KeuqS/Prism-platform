@@ -92,7 +92,15 @@ class WhoisLookup:
 
             if w.name_servers:
                 ns = w.name_servers if isinstance(w.name_servers, list) else [w.name_servers]
-                result["name_servers"] = [str(n).lower() for n in ns if n]
+                cleaned: List[str] = []
+                for name_server in ns:
+                    parts = str(name_server).split()
+                    if not parts:
+                        continue
+                    host = parts[0].rstrip(".").lower()
+                    if host and host not in cleaned:
+                        cleaned.append(host)
+                result["name_servers"] = cleaned
 
             if w.status:
                 status = w.status if isinstance(w.status, list) else [w.status]
